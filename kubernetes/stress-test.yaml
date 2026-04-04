@@ -1,0 +1,93 @@
+# =============================================================================
+# stress-test.yaml  (OPTIONAL — Demo / Testing only)
+# =============================================================================
+#
+# PURPOSE:
+#   Triggers the HighCPUUsage alert in our-system by running a CPU stress
+#   workload inside the cluster. After ~30-60 seconds, the alert should
+#   appear in Prometheus under Alerts → HighCPUUsage (FIRING).
+#
+# USAGE:
+#   kubectl apply -f stress-test.yaml
+#   # Watch alert fire:
+#   kubectl port-forward svc/our-prometheus -n monitoring 9090:9090
+#   # → http://localhost:9090/alerts
+#
+# CLEANUP:
+#   kubectl delete -f stress-test.yaml
+#
+# NOTE: This is NOT part of the core monitoring system.
+#       It is a test fixture only. Delete it after verifying alerts.
+# =============================================================================
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: stress-test
+  labels:
+    app.kubernetes.io/part-of: our-system-demo
+
+---
+# Stress deployment — runs 2 replicas of a CPU stress workload.
+# Each container burns CPU using a simple shell loop.
+# The container!="" label selector in our alert rule will match these.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpu-stress
+  namespace: stress-test
+  labels:
+    app: cpu-stress
+    app.kubernetes.io/part-of: our-system-demo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cpu-stress
+  template:
+    metadata:
+      labels:
+        app: cpu-stress
+        app.kubernetes.io/part-of: our-system-demo
+      annotations:
+        # Opt in to Prometheus scraping (metrics path /metrics)
+        prometheus.io/scrape: "false"   # stress pod has no metrics endpoint
+    spec:
+      containers:
+        - name: stress
+          # Uses the official stress-ng image — designed for load testing
+          image: alexeiled/stress-ng:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - --cpu          # stress CPU
+            - "2"            # 2 stressors
+            - --cpu-load     # target load percentage
+            - "80"           # 80% CPU utilization per stressor
+            - --timeout      # auto-stop after N seconds (0 = forever)
+            - "0"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "64Mi"
+            limits:
+              cpu: "2"
+              memory: "128Mi"
+
+# =============================================================================
+# HOW TO VERIFY THE ALERT FIRES:
+#
+#   1. Apply stress test:
+#      kubectl apply -f stress-test.yaml
+#
+#   2. Wait ~30 seconds, then check in Prometheus:
+#      kubectl port-forward svc/our-prometheus -n monitoring 9090:9090
+#      # → http://localhost:9090/alerts
+#      # → HighCPUUsage: FIRING
+#
+#   3. Check the query directly in Prometheus Graph:
+#      sum(rate(container_cpu_usage_seconds_total{container!=""}[5m]))
+#
+#   4. When done, remove stress:
+#      kubectl delete -f stress-test.yaml
+# =============================================================================
