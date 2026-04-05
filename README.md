@@ -315,12 +315,12 @@ React Dashboard shows entire lifecycle in real time via WebSocket
 
 | Member | Role |
 |---|---|
-| **Devang** | Automation Architect & Technical Lead — n8n workflows, Kubernetes integration, system architecture |
+| **Devang** | N8N Automation Architect |
 | **Omkar** | Frontend Lead — React dashboard, real-time visualization, UI/UX |
 | **Bhavesh** | Frontend Support + API Bridge — Reusable UI components, data layer |
-| **Heet** | Backend Engineer — Node.js API, PostgreSQL queries, Socket.IO |
-| **Moghe** | Infrastructure & DevOps — Kubernetes cluster, Prometheus, stress testing |
-| **Sakshi** | UX & Demo Lead — Design system, demo script, submission document |
+| **Heet** | Backend Engineer — Node.js API, Socket.IO |
+| **Parth** | Infrastructure & DevOps — Kubernetes cluster, Prometheus, stress testing |
+| **Sakshi** |N8N Assistant Architect |
 
 ---
 
